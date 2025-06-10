@@ -78,6 +78,7 @@ class RangeSlider extends HTMLElement {
           height: 14px;
           left: 0;
           position: absolute;
+          touch-action: none;
         }
 
         [range]:hover {
@@ -99,6 +100,7 @@ class RangeSlider extends HTMLElement {
           position: absolute;
           text-align: left;
           top: -7px;
+          touch-action: none;
           width: 28px;
           z-index: 2;
         }
@@ -325,22 +327,14 @@ class RangeSlider extends HTMLElement {
   initThumbDrag(thumb, which) {
     let dragging = false;
     let onMove, onUp;
+
+    // Mouse events
     thumb.addEventListener("mousedown", (e) => {
       e.preventDefault();
       dragging = true;
       document.body.style.userSelect = "none";
       onMove = (moveEvent) => {
-        const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
-        const x = moveEvent.clientX - sliderRect.left;
-        const percent = Math.max(0, Math.min(1, x / sliderRect.width));
-        const value = Math.round(this.min + percent * (this.max - this.min));
-        if (which === 'low') {
-          this.low = Math.min(this.high - 1, Math.max(this.min, value));
-        } else {
-          this.high = Math.max(this.low + 1, Math.min(this.max, value));
-        }
-        this.updateUI();
-        this.dispatchEvent(new CustomEvent('change', { detail: this.values }));
+        this.handleThumbMove(moveEvent.clientX, which);
       };
       onUp = () => {
         dragging = false;
@@ -351,11 +345,48 @@ class RangeSlider extends HTMLElement {
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     });
+
+    // Touch events
+    thumb.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dragging = true;
+      document.body.style.userSelect = "none";
+      onMove = (moveEvent) => {
+        const touch = moveEvent.touches[0];
+        this.handleThumbMove(touch.clientX, which);
+      };
+      onUp = () => {
+        dragging = false;
+        document.body.style.userSelect = "";
+        window.removeEventListener("touchmove", onMove);
+        window.removeEventListener("touchend", onUp);
+        window.removeEventListener("touchcancel", onUp);
+      };
+      window.addEventListener("touchmove", onMove);
+      window.addEventListener("touchend", onUp);
+      window.addEventListener("touchcancel", onUp);
+    });
+  }
+
+  handleThumbMove(clientX, which) {
+    const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
+    const x = clientX - sliderRect.left;
+    const percent = Math.max(0, Math.min(1, x / sliderRect.width));
+    const value = Math.round(this.min + percent * (this.max - this.min));
+    if (which === 'low') {
+      this.low = Math.min(this.high - 1, Math.max(this.min, value));
+    } else {
+      this.high = Math.max(this.low + 1, Math.min(this.max, value));
+    }
+    this.updateUI();
+    this.dispatchEvent(new CustomEvent('change', { detail: this.values }));
   }
 
   initRangeDrag() {
     let dragging = false;
     let startX, startLow, startHigh;
+
+    // Mouse events
     this.rangeEl.addEventListener("mousedown", (e) => {
       e.preventDefault();
       dragging = true;
@@ -365,19 +396,7 @@ class RangeSlider extends HTMLElement {
       startHigh = this.high;
       document.body.style.userSelect = "none";
       const onMove = (moveEvent) => {
-        const dx = moveEvent.clientX - startX;
-        const percent = dx / sliderRect.width;
-        const delta = Math.round(percent * (this.max - this.min));
-        let newLow = Math.max(this.min, Math.min(startLow + delta, this.max - (startHigh - startLow)));
-        let newHigh = newLow + (startHigh - startLow);
-        if (newHigh > this.max) {
-          newHigh = this.max;
-          newLow = newHigh - (startHigh - startLow);
-        }
-        this.low = newLow;
-        this.high = newHigh;
-        this.updateUI();
-        this.dispatchEvent(new CustomEvent('change', { detail: this.values }));
+        this.handleRangeMove(moveEvent.clientX, startX, startLow, startHigh, sliderRect);
       };
       const onUp = () => {
         dragging = false;
@@ -388,6 +407,47 @@ class RangeSlider extends HTMLElement {
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     });
+
+    // Touch events
+    this.rangeEl.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dragging = true;
+      const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
+      startX = e.touches[0].clientX;
+      startLow = this.low;
+      startHigh = this.high;
+      document.body.style.userSelect = "none";
+      const onMove = (moveEvent) => {
+        const touch = moveEvent.touches[0];
+        this.handleRangeMove(touch.clientX, startX, startLow, startHigh, sliderRect);
+      };
+      const onUp = () => {
+        dragging = false;
+        document.body.style.userSelect = "";
+        window.removeEventListener("touchmove", onMove);
+        window.removeEventListener("touchend", onUp);
+        window.removeEventListener("touchcancel", onUp);
+      };
+      window.addEventListener("touchmove", onMove);
+      window.addEventListener("touchend", onUp);
+      window.addEventListener("touchcancel", onUp);
+    });
+  }
+
+  handleRangeMove(clientX, startX, startLow, startHigh, sliderRect) {
+    const dx = clientX - startX;
+    const percent = dx / sliderRect.width;
+    const delta = Math.round(percent * (this.max - this.min));
+    let newLow = Math.max(this.min, Math.min(startLow + delta, this.max - (startHigh - startLow)));
+    let newHigh = newLow + (startHigh - startLow);
+    if (newHigh > this.max) {
+      newHigh = this.max;
+      newLow = newHigh - (startHigh - startLow);
+    }
+    this.low = newLow;
+    this.high = newHigh;
+    this.updateUI();
+    this.dispatchEvent(new CustomEvent('change', { detail: this.values }));
   }
 }
 
