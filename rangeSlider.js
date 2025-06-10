@@ -94,6 +94,7 @@ class RangeSlider extends HTMLElement {
           background-color: #FFF;
           border-radius: 50%;
           box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+          cursor: grab;
           height: 28px;
           margin-left: -11px;
           outline: none;
@@ -186,6 +187,7 @@ class RangeSlider extends HTMLElement {
           position: absolute;
           text-align: center;
           top: -39px;
+          transition: opacity 0.2s ease-in-out;
           width: 28px;
           z-index:3;
           -webkit-border-radius: 28px;
@@ -211,6 +213,7 @@ class RangeSlider extends HTMLElement {
           line-height: 28px;
         }
         
+        [slider][is-dragging] > div > [sign],
         [slider]:hover > div > [sign] {
           opacity: 1;
         }
@@ -327,17 +330,20 @@ class RangeSlider extends HTMLElement {
   initThumbDrag(thumb, which) {
     let dragging = false;
     let onMove, onUp;
+    const sliderDiv = this.shadowRoot.querySelector('#slider-distance');
 
     // Mouse events
     thumb.addEventListener("mousedown", (e) => {
       e.preventDefault();
       dragging = true;
+      sliderDiv.setAttribute('is-dragging', 'true');
       document.body.style.userSelect = "none";
       onMove = (moveEvent) => {
         this.handleThumbMove(moveEvent.clientX, which);
       };
       onUp = () => {
         dragging = false;
+        sliderDiv.removeAttribute('is-dragging');
         document.body.style.userSelect = "";
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
@@ -350,6 +356,7 @@ class RangeSlider extends HTMLElement {
     thumb.addEventListener("touchstart", (e) => {
       e.preventDefault();
       dragging = true;
+      sliderDiv.setAttribute('is-dragging', 'true');
       document.body.style.userSelect = "none";
       onMove = (moveEvent) => {
         const touch = moveEvent.touches[0];
@@ -357,6 +364,64 @@ class RangeSlider extends HTMLElement {
       };
       onUp = () => {
         dragging = false;
+        sliderDiv.removeAttribute('is-dragging');
+        document.body.style.userSelect = "";
+        window.removeEventListener("touchmove", onMove);
+        window.removeEventListener("touchend", onUp);
+        window.removeEventListener("touchcancel", onUp);
+      };
+      window.addEventListener("touchmove", onMove);
+      window.addEventListener("touchend", onUp);
+      window.addEventListener("touchcancel", onUp);
+    });
+  }
+
+  initRangeDrag() {
+    let dragging = false;
+    let startX, startLow, startHigh;
+    const sliderDiv = this.shadowRoot.querySelector('#slider-distance');
+
+    // Mouse events
+    this.rangeEl.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      dragging = true;
+      sliderDiv.setAttribute('is-dragging', 'true');
+      const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
+      startX = e.clientX;
+      startLow = this.low;
+      startHigh = this.high;
+      document.body.style.userSelect = "none";
+      const onMove = (moveEvent) => {
+        this.handleRangeMove(moveEvent.clientX, startX, startLow, startHigh, sliderRect);
+      };
+      const onUp = () => {
+        dragging = false;
+        sliderDiv.removeAttribute('is-dragging');
+        document.body.style.userSelect = "";
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    });
+
+    // Touch events
+    this.rangeEl.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dragging = true;
+      sliderDiv.setAttribute('is-dragging', 'true');
+      const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
+      startX = e.touches[0].clientX;
+      startLow = this.low;
+      startHigh = this.high;
+      document.body.style.userSelect = "none";
+      const onMove = (moveEvent) => {
+        const touch = moveEvent.touches[0];
+        this.handleRangeMove(touch.clientX, startX, startLow, startHigh, sliderRect);
+      };
+      const onUp = () => {
+        dragging = false;
+        sliderDiv.removeAttribute('is-dragging');
         document.body.style.userSelect = "";
         window.removeEventListener("touchmove", onMove);
         window.removeEventListener("touchend", onUp);
@@ -380,58 +445,6 @@ class RangeSlider extends HTMLElement {
     }
     this.updateUI();
     this.dispatchEvent(new CustomEvent('change', { detail: this.values }));
-  }
-
-  initRangeDrag() {
-    let dragging = false;
-    let startX, startLow, startHigh;
-
-    // Mouse events
-    this.rangeEl.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      dragging = true;
-      const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
-      startX = e.clientX;
-      startLow = this.low;
-      startHigh = this.high;
-      document.body.style.userSelect = "none";
-      const onMove = (moveEvent) => {
-        this.handleRangeMove(moveEvent.clientX, startX, startLow, startHigh, sliderRect);
-      };
-      const onUp = () => {
-        dragging = false;
-        document.body.style.userSelect = "";
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
-    });
-
-    // Touch events
-    this.rangeEl.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      dragging = true;
-      const sliderRect = this.shadowRoot.querySelector("#slider-distance").getBoundingClientRect();
-      startX = e.touches[0].clientX;
-      startLow = this.low;
-      startHigh = this.high;
-      document.body.style.userSelect = "none";
-      const onMove = (moveEvent) => {
-        const touch = moveEvent.touches[0];
-        this.handleRangeMove(touch.clientX, startX, startLow, startHigh, sliderRect);
-      };
-      const onUp = () => {
-        dragging = false;
-        document.body.style.userSelect = "";
-        window.removeEventListener("touchmove", onMove);
-        window.removeEventListener("touchend", onUp);
-        window.removeEventListener("touchcancel", onUp);
-      };
-      window.addEventListener("touchmove", onMove);
-      window.addEventListener("touchend", onUp);
-      window.addEventListener("touchcancel", onUp);
-    });
   }
 
   handleRangeMove(clientX, startX, startLow, startHigh, sliderRect) {
