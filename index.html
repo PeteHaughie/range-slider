@@ -3,18 +3,78 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>My Web Page</title>
+    <title>Range-Bar</title>
     <script src="rangebar.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        code {
+            background: #f5f5f5;
+            border-radius: 0.25rem;
+            display: block;
+            padding: 1rem;
+            font-family: "Roboto Mono", monospace;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Range Slider</h1>
-    <h3>Built in the HTML</h3>
+    <p>Minimal implementation:</p>
+    <pre><code>&lt;range-slider min="0" max="100" low="0" high="20" step="1"&gt;&lt;/range-slider&gt;</code></pre>
+
     <range-slider min="0" max="100" low="0" high="20" step="1"></range-slider>
     <script>
-        const rangeSlider = document.querySelector('range-slider');
-        rangeSlider.addEventListener('change', (event) => {
+        const rangeBar = document.querySelector('range-slider');
+        // create a dl element to test the range Bar values
+        const dl = document.createElement('dl');
+        const dt = document.createElement('dt');
+        const dd = document.createElement('dd');
+        const dtMin = dt.cloneNode();
+        const ddMin = dd.cloneNode();
+        dtMin.textContent = 'Min:';
+        ddMin.textContent = rangeBar.min;
+        dl.appendChild(dtMin);
+        dl.appendChild(ddMin);
+        const dtMax = dt.cloneNode();
+        const ddMax = dd.cloneNode();
+        dtMax.textContent = 'Max:';
+        ddMax.textContent = rangeBar.max;
+        dl.appendChild(dtMax);
+        dl.appendChild(ddMax);
+        const dtLow = dt.cloneNode();
+        const ddLow = dd.cloneNode();
+        dtLow.textContent = 'Low:';
+        ddLow.textContent = rangeBar.low;
+        dl.appendChild(dtLow);
+        dl.appendChild(ddLow);
+        const dtHigh = dt.cloneNode();
+        const ddHigh = dd.cloneNode();
+        dtHigh.textContent = 'High:';
+        ddHigh.textContent = rangeBar.high;
+        dl.appendChild(dtHigh);
+        dl.appendChild(ddHigh);
+        document.body.appendChild(dl);
+
+        rangeBar.addEventListener('change', (event) => {
             console.log('Range changed:', event.detail);
+            ddLow.textContent = event.detail.low;
+            ddHigh.textContent = event.detail.high;
         });
     </script>
 </body>
