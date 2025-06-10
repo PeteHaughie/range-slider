@@ -5,33 +5,17 @@
     <meta charset="UTF-8">
     <title>My Web Page</title>
     <script src="rangebar.js"></script>
-    <script>
-        const range = document.createElement('range-slider');
-              range.min = 0;
-              range.max = 128;
-              range.low = 10;
-              range.high = 50;
-              range.step = 1;
-        range.addEventListener('input', () => {
-            console.log(range.values);
-        });
-    </script>
 </head>
 
 <body>
     <h1>Range Slider</h1>
     <h3>Built in the HTML</h3>
-    <range-slider min="0" max="128" low="20" high="80" step="1"></range-slider>
-    <h3>Built in JS and appended</h3>
+    <range-slider min="0" max="100" low="0" high="20" step="1"></range-slider>
+    <script>
+        const rangeSlider = document.querySelector('range-slider');
+        rangeSlider.addEventListener('change', (event) => {
+            console.log('Range changed:', event.detail);
+        });
+    </script>
 </body>
-
-<script>
-    document.body.append(range);
-
-    const otherRange = document.getElementsByTagName("range-slider")[0];
-    otherRange.addEventListener('input', () => {
-        console.log(otherRange.values.low);
-    });
-</script>
-
 </html>
